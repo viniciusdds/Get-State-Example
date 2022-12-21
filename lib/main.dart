@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const GetMaterialApp(
+    return  GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Eadiaurora.com',
       home: HomePage(),
@@ -47,14 +47,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
-
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
+class HomePage extends StatelessWidget {
 
   // Crie uma instancia do GetConnect
   final GetConnect _connect = GetConnect(
@@ -63,7 +56,8 @@ class _HomePageState extends State<HomePage> {
 
   final loading = false.obs;
 
-  File? _image;
+  //File? _image;
+  Rx<File> _image = File('').obs;
 
   final _picker = ImagePicker();
 
@@ -71,23 +65,21 @@ class _HomePageState extends State<HomePage> {
   Future<void> _openImagePicker() async {
     final XFile? pickedImage = await _picker.pickImage(source: ImageSource.gallery);
     if(pickedImage != null){
-      setState(() {
-        _image = File(pickedImage.path);
-
-      });
+      //setState(() {
+        _image.value = File(pickedImage.path);
+      //});
     }
-
-
   }
 
+  // Função para enviar o arquivo para o servidor
   Future enviaFile() async {
 
      loading.value = true;
 
-    //print(_image!.path);
+     //print(_image.value.path);
     // Você pode fazer upload de multiplos arquivos em um mesmo POST request
     final FormData _formData = FormData({
-      'file1': MultipartFile(File(_image!.path), filename: 'Manutencao1.png')
+      'file1': MultipartFile(File(_image.value.path), filename: 'Manutencao1.png')
     });
     try{
       final Response res = await _connect.post(
@@ -125,13 +117,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 35),
-              Container(
-                alignment: Alignment.center,
-                width: double.infinity,
-                height: 300,
-                color: Colors.grey.shade300,
-                child: _image != null ? Image.file(_image!, fit: BoxFit.cover)
-                : const Text('Por favor selecione uma imagem'),
+              Obx(() => Container(
+                  alignment: Alignment.center,
+                  width: double.infinity,
+                  height: 300,
+                  color: Colors.grey.shade300,
+                  child: _image.value.path != '' ? Image.file(_image.value, fit: BoxFit.cover)
+                  : const Text('Por favor selecione uma imagem'),
+                ),
               ),
               Obx(() => ElevatedButton(
                     onPressed: loading.value ? null : enviaFile,
